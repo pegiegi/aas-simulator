@@ -1,6 +1,6 @@
 // Monokromator (celah masuk, kisi, celah keluar) dan detektor PMT.
 import * as THREE from 'three';
-import { mat, cylBetween, addLabel } from '../scene.js';
+import { mat, cylBetween, addLabel } from './scene.js';
 
 // Celah = dua pelat tipis dengan sela sempit; rotY mengarahkan celah tegak lurus berkas
 function slit(x, z, rotY) {

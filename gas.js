@@ -1,6 +1,6 @@
 // Tabung asetilen, kompresor udara, dan pipa menuju burner.
 import * as THREE from 'three';
-import { mat, addLabel } from '../scene.js';
+import { mat, addLabel } from './scene.js';
 
 export function createGas() {
   const group = new THREE.Group();

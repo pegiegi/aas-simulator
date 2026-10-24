@@ -1,7 +1,7 @@
 // Berkas cahaya 324,7 nm dari lampu -> nyala -> monokromator -> PMT.
 // Opasitas setelah nyala mengikuti transmitansi T = 10^-A.
 import * as THREE from 'three';
-import { cylBetween, addLabel } from '../scene.js';
+import { cylBetween, addLabel } from './scene.js';
 
 export function createBeam() {
   const group = new THREE.Group();

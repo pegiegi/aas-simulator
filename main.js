@@ -1,12 +1,12 @@
 // Titik masuk: merakit scene, menjalankan loop animasi, dan menghubungkan UI dengan simulasi.
 import * as THREE from 'three';
 import { initScene, scene, render, enablePicking } from './scene.js';
-import { createLamp } from './components/lamp.js';
-import { createBurner } from './components/burner.js';
-import { createMonochromator } from './components/monochromator.js';
-import { createBeam } from './components/beam.js';
-import { createComputer } from './components/computer.js';
-import { createGas } from './components/gas.js';
+import { createLamp } from './lamp.js';
+import { createBurner } from './burner.js';
+import { createMonochromator } from './monochromator.js';
+import { createBeam } from './beam.js';
+import { createComputer } from './computer.js';
+import { createGas } from './gas.js';
 import * as ui from './ui.js';
 import { cal, absorbance, UNKNOWN_CONC, initChart } from './calibration.js';
 

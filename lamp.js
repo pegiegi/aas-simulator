@@ -1,6 +1,6 @@
 // Hollow Cathode Lamp (HCL) Cu: tabung kaca + katoda tembaga, menyala oranye-kehijauan saat ON.
 import * as THREE from 'three';
-import { mat, addLabel } from '../scene.js';
+import { mat, addLabel } from './scene.js';
 
 export function createLamp() {
   const group = new THREE.Group();

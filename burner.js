@@ -1,6 +1,6 @@
 // Nebulizer + spray chamber + selang sampel + burner head + nyala animasi (partikel).
 import * as THREE from 'three';
-import { mat, addLabel } from '../scene.js';
+import { mat, addLabel } from './scene.js';
 
 // Tekstur lingkaran lembut untuk partikel api
 function glowTexture() {

@@ -1,6 +1,6 @@
 // Komputer pembaca: layar menampilkan absorbansi real-time (canvas sebagai tekstur).
 import * as THREE from 'three';
-import { mat, addLabel } from '../scene.js';
+import { mat, addLabel } from './scene.js';
 
 export function createComputer() {
   const group = new THREE.Group();
