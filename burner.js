@@ -30,7 +30,7 @@ export function createBurner() {
 
   // Gelas sampel + cairan + selang kapiler menuju nebulizer
   const beaker = new THREE.Group();
-  beaker.position.set(-2.3, 0, 1.8);
+  beaker.position.set(-2.3, -1.27, 3.4);
   beaker.userData.key = 'sample';
   const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.7, 20, 1, true),
     new THREE.MeshStandardMaterial({ color: 0xdff1ff, transparent: true, opacity: 0.3, side: THREE.DoubleSide }));
@@ -39,9 +39,9 @@ export function createBurner() {
   liquid.position.y = 0.27;
   beaker.add(glass, liquid);
   const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-2.3, 0.15, 1.8), new THREE.Vector3(-2.3, 1.0, 1.8),
-    new THREE.Vector3(-1.4, 0.9, 0.8), new THREE.Vector3(-0.9, 0.5, 0)]);
-  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.03, 6), new THREE.MeshStandardMaterial({ color: 0xdddddd, transparent: true, opacity: 0.7 }));
+    new THREE.Vector3(-2.3, -1.1, 3.4), new THREE.Vector3(-2.3, -0.3, 3.4),
+    new THREE.Vector3(-1.4, 0.4, 1.6), new THREE.Vector3(-0.9, 0.5, 0)]);
+  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.05, 6), new THREE.MeshStandardMaterial({ color: 0xdddddd, transparent: true, opacity: 0.7 }));
   tube.userData.key = 'nebulizer';
 
   // Nyala: partikel bercahaya yang naik dari burner head

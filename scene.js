@@ -7,7 +7,7 @@ export const scene = new THREE.Scene();
 export const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
 export const renderer = new THREE.WebGLRenderer({ antialias: true });
 export const labelRenderer = new CSS2DRenderer();
-let controls, floor, labelClick = () => {};
+let controls, floor, tween = null, labelClick = () => {};
 
 // Material standar agar kode komponen singkat
 export const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.2, ...o });
@@ -39,26 +39,22 @@ export function initScene(container) {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.maxPolarAngle = Math.PI * 0.52;
+  controls.maxDistance = 60;
+  controls.addEventListener('start', () => { tween = null; });
   scene.add(new THREE.AmbientLight(0xffffff, 1.1));
   const dl = new THREE.DirectionalLight(0xffffff, 2.2);
   dl.position.set(6, 12, 10);
   scene.add(dl);
-  // Meja lab: papan, empat kaki, lantai
-  const top = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 5.5), mat(0xdde2e6));
-  top.position.set(0.5, -0.15, 0);
-  scene.add(top);
-  [[-7, -2.4], [8, -2.4], [-7, 2.4], [8, 2.4]].forEach(([x, z]) => {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3, 0.3), mat(0x555d66));
-    leg.position.set(x, -1.65, z);
-    scene.add(leg);
-  });
-  floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), mat(0x222a33, { roughness: 1 }));
+  floor = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), mat(0x222a33, { roughness: 1 }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -3.15;
   scene.add(floor);
   new ResizeObserver(() => resize(container)).observe(container);
   resize(container);
-  resetCamera();
+  const [p0, t0] = overview();
+  camera.position.set(...p0);
+  controls.target.set(...t0);
+  controls.update();
   setTheme(true);
 }
 
@@ -71,16 +67,19 @@ function resize(c) {
   camera.updateProjectionMatrix();
 }
 
-export function resetCamera() {
-  camera.position.set(1, 5.5, camera.aspect < 1.2 ? 22 : 13.5);
-  controls.target.set(1, 1, 0);
-  controls.update();
+// Posisi kamera awal: [posisi, target]
+export function overview() { return camera.aspect < 1.2 ? [[-5, 8, 40], [-5, 2, 0]] : [[-5, 6, 22], [-5, 2, 0]]; }
+
+// Terbang halus ke posisi p dengan target t
+export function flyTo(p, t, ms = 1100) {
+  tween = { p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...p), t1: new THREE.Vector3(...t), s: performance.now(), ms };
 }
+export function resetCamera() { const [p, t] = overview(); flyTo(p, t); }
 
 export const setLabels = (v) => { labelRenderer.domElement.style.display = v ? '' : 'none'; };
 
 export function setTheme(dark) {
-  scene.background = new THREE.Color(dark ? 0x0e1621 : 0xdfe6ed);
+  scene.background = new THREE.Color(dark ? 0x141a33 : 0xdfe6ed);
   floor.material.color.set(dark ? 0x1b2430 : 0xb9c3cd);
 }
 
@@ -96,6 +95,7 @@ export function enablePicking(cb) {
     m.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(m, camera);
     for (const h of ray.intersectObjects(scene.children, true)) {
+      if (h.object.userData.shell && h.object.material.opacity < 0.5) continue; // abaikan bodi saat tembus pandang
       let o = h.object;
       while (o && !o.userData.key) o = o.parent;
       if (o) { cb(o.userData.key); return; }
@@ -104,6 +104,12 @@ export function enablePicking(cb) {
 }
 
 export function render() {
+  if (tween) {
+    const k = Math.min(1, (performance.now() - tween.s) / tween.ms), e = k * k * (3 - 2 * k);
+    camera.position.lerpVectors(tween.p0, tween.p1, e);
+    controls.target.lerpVectors(tween.t0, tween.t1, e);
+    if (k >= 1) tween = null;
+  }
   controls.update();
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);

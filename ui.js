@@ -1,6 +1,6 @@
 // Antarmuka: tombol, pilihan sampel, tabel/grafik kalibrasi, mode penjelasan dan langkah kerja.
 import { cal, points, linreg, concFromA, updateChart, themeChart } from './calibration.js';
-import { resetCamera, setLabels, setTheme } from './scene.js';
+import { resetCamera, flyTo, setLabels, setTheme } from './scene.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,8 +20,17 @@ export const INFO = {
   gas: ['Tabung asetilen & kompresor udara', 'Menyuplai bahan bakar dan oksidator. Urutan aman: buka udara dahulu, lalu asetilen, baru nyalakan api. Saat mematikan, tutup asetilen lebih dulu. Periksa kebocoran sebelum bekerja.'],
 };
 
+INFO.overview = ['Overview', 'Model 3D AAS nyala bergaya AA-7000 di meja lab. Putar, zoom, dan geser kamera. Klik komponen atau pilih dari daftar di kiri untuk melihat fungsinya. Peralatan gas ada di ruang terpisah di kiri, dan exhaust hood menghisap uap nyala dari atas alat.'];
+INFO.principle = ['Prinsip kerja AAS nyala', 'Lampu HCL Cu memancarkan garis 324,7 nm. Larutan sampel dikabutkan lalu diatomisasi dalam nyala udara–asetilen. Atom Cu menyerap sebagian cahaya, monokromator memisahkan 324,7 nm, PMT mengukur intensitas, dan komputer menghitung absorbansi. Absorbansi sebanding dengan konsentrasi (Lambert–Beer), sehingga konsentrasi sampel dibaca dari kurva kalibrasi.'];
+INFO.body = ['Bodi instrumen', 'Rumah sistem optik dan atomisasi. Jendela depan memperlihatkan nyala. Tekan Tembus Pandang untuk melihat lampu, monokromator, dan detektor di dalamnya.'];
+INFO.dome = ['Kompartemen lampu HCL', 'Penutup hitam di atas alat melindungi lampu hollow cathode. Lampu perlu dipanaskan beberapa menit agar emisinya stabil sebelum pengukuran.'];
+INFO.hood = ['Exhaust hood', 'Menghisap gas hasil pembakaran dan uap logam dari nyala, lalu membuangnya lewat saluran ke luar ruangan. Harus menyala selama api hidup.'];
+INFO.ups = ['UPS', 'Menjaga pasokan listrik tetap stabil agar instrumen dan komputer tidak mati mendadak saat pengukuran.'];
+INFO.gas = ['Ruang gas & kompresor', 'Tabung asetilen dan kompresor udara ditempatkan di ruangan terpisah demi keselamatan; gas dialirkan lewat pipa ke alat. Buka udara dahulu, lalu asetilen, baru nyalakan api. Saat mematikan, tutup asetilen lebih dulu.'];
+
 // Daftar langkah kerja dan syarat selesainya
 const STEPS = [
+  ['Nyalakan komputer dan monitor', (s) => s.pc && s.monitor],
   ['Nyalakan lampu HCL Cu dan tunggu stabil', (s) => s.lamp],
   ['Buka gas udara dan asetilen', (s) => s.gas],
   ['Nyalakan api', (s) => s.flame],
@@ -42,7 +51,8 @@ export function toast(msg) {
 }
 
 export function showInfo(key) {
-  if (!explainOn || !INFO[key]) return;
+  if (!INFO[key]) return;
+  setTab('info');
   $('infoTitle').textContent = INFO[key][0];
   $('infoText').textContent = INFO[key][1];
 }
@@ -66,10 +76,53 @@ export function renderCalibration() {
   updateChart(reg, up);
 }
 
-export function initUI(state, measure) {
+// Titik fokus kamera: [x, y, z, jarak, tembus pandang?]
+const FOCUS = {
+  body: [0.3, 1.5, 0, 11, 0], dome: [-1.9, 3, 0, 6, 0], lamp: [-2.1, 1.5, 0, 6, 1], beam: [-0.3, 1.5, 0, 7, 1],
+  nebulizer: [-0.2, 0.8, 0.9, 6, 1], burner: [0.3, 1.5, 0, 4.5, 0], sample: [-0.9, 0.4, 1.9, 5, 0],
+  mono: [2.1, 1.5, 0, 7, 1], slitin: [1.4, 1.5, 0, 4, 1], grating: [1.95, 1.5, 0, 4, 1], slitout: [2.3, 1.5, -0.4, 4, 1],
+  pmt: [2.5, 1.5, -0.7, 5, 1], computer: [5.4, 1.4, 0.5, 6, 0], hood: [0.3, 4.6, 0, 9, 0], gas: [-11, -0.5, 0, 12, 0], ups: [-4.3, 0.6, 0.2, 5, 0],
+};
+const SECS = [['overview', '1 · Overview'], ['room', 'Instrumen saja'], ['nebulizer', '2 · Sample introduction'], ['burner', '3 · Atomization'], ['mono', '4 · Optical system'], ['pmt', '5 · Detection'], ['hood', '6 · Safety system'], ['ups', '7 · Kelistrikan']];
+const COMPS = [['dome', 'Kompartemen lampu HCL'], ['lamp', 'Hollow cathode lamp'], ['beam', 'Berkas 324,7 nm'], ['sample', 'Larutan sampel'], ['nebulizer', 'Nebulizer + spray chamber'], ['burner', 'Burner & nyala'], ['slitin', 'Celah masuk'], ['grating', 'Kisi (grating)'], ['slitout', 'Celah keluar'], ['mono', 'Monokromator'], ['pmt', 'Detektor PMT'], ['computer', 'Komputer'], ['hood', 'Exhaust hood'], ['gas', 'Ruang gas & kompresor'], ['ups', 'UPS']];
+const CHIPS = [['sample', 'Sampel'], ['nebulizer', 'Nebulizer'], ['nebulizer', 'Spray chamber'], ['burner', 'Burner / nyala'], ['burner', 'Atomisasi'], ['mono', 'Monokromator'], ['pmt', 'Detektor'], ['computer', 'Sinyal'], ['cal', 'Konsentrasi'], ['cal', 'Kurva kalibrasi']];
+
+let H = {}, xrayOn = false, roomOn = true, tourT = [];
+
+function setTab(t) {
+  document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  ['Info', 'Ctl', 'Cal'].forEach((n) => { $('pane' + n).hidden = n.toLowerCase() !== t; });
+}
+function setXray(on) { xrayOn = on; H.xray(on); $('btnXray').classList.toggle('on', on); }
+
+// Terbang ke komponen, atur tembus pandang, dan tampilkan penjelasan
+export function focus(key) {
+  const f = FOCUS[key];
+  if (!f) return;
+  setXray(!!f[4]);
+  flyTo([f[0] + f[3] * 0.15, f[1] + f[3] * 0.35, f[2] + f[3] * 0.93], [f[0], f[1], f[2]]);
+  showInfo(key);
+}
+function home() { setXray(false); resetCamera(); showInfo('overview'); }
+function tour(keys) { tourT.forEach(clearTimeout); tourT = keys.map((k, i) => setTimeout(() => focus(k), i * 2800)); }
+
+export function initUI(state, measure, hooks) {
+  H = hooks;
   const reset = () => { state.buf = []; state.settle = 6; }; // tunggu pembacaan stabil lagi
-  const stepsEl = $('steps');
-  STEPS.forEach(([t]) => { const li = document.createElement('li'); li.textContent = t; stepsEl.appendChild(li); });
+  const mk = (box, text, fn) => { const b = document.createElement('button'); b.textContent = text; b.onclick = fn; $(box).appendChild(b); return b; };
+  STEPS.forEach(([t]) => { const li = document.createElement('li'); li.textContent = t; $('steps').appendChild(li); });
+  SECS.forEach(([k, t]) => {
+    const b = mk('secs', t, () => {
+      document.body.classList.remove('menu');
+      if (k === 'overview') return home();
+      if (k !== 'room') return focus(k);
+      roomOn = !roomOn; H.room(roomOn); b.classList.toggle('on', !roomOn);
+      roomOn ? home() : focus('body');
+    });
+  });
+  COMPS.forEach(([k, t]) => mk('comps', t, () => { document.body.classList.remove('menu'); focus(k); }));
+  CHIPS.forEach(([k, t]) => mk('chips', t, () => (k === 'cal' ? setTab('cal') : focus(k))));
+  document.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => setTab(b.dataset.tab); });
 
   $('btnLamp').onclick = () => { state.lamp = !state.lamp; reset(); };
   $('btnGas').onclick = () => { state.gas = !state.gas; if (!state.gas) state.flame = false; reset(); };
@@ -91,24 +144,27 @@ export function initUI(state, measure) {
     $('rngConc').value = state.conc;
     reset();
   };
-  $('rngConc').oninput = (e) => {
-    state.sample = 'manual';
-    $('selSample').value = 'manual';
-    state.conc = +e.target.value;
-    reset();
-  };
+  $('rngConc').oninput = (e) => { state.sample = 'manual'; $('selSample').value = 'manual'; state.conc = +e.target.value; reset(); };
   $('btnMeasure').onclick = measure;
   $('btnClear').onclick = () => { cal.blank = null; cal.std = {}; cal.unknown = null; renderCalibration(); };
-  $('btnReset').onclick = resetCamera;
-  $('btnLabels').onclick = (e) => { const on = e.target.classList.toggle('on'); setLabels(on); };
+
+  $('btnStart').onclick = () => { setTab('ctl'); home(); toast('Ikuti langkah kerja pada tab Kontrol.'); };
+  $('btnComp').onclick = (e) => setLabels(e.currentTarget.classList.toggle('on'));
+  $('btnPath').onclick = () => tour(['sample', 'nebulizer', 'burner', 'mono', 'pmt', 'computer']);
+  $('btnPrin').onclick = () => showInfo('principle');
+  $('btnXray').onclick = () => setXray(!xrayOn);
+  $('btnCalc').onclick = () => setTab('cal');
+  $('btnPC').onclick = () => { state.pc = !state.pc; };
+  $('btnMon').onclick = () => { state.monitor = !state.monitor; };
+  $('btnCam').onclick = home;
+  $('btnFull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
+  $('btnMenu').onclick = () => document.body.classList.toggle('menu');
   $('btnTheme').onclick = () => {
     const dark = document.documentElement.dataset.theme !== 'dark';
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     setTheme(dark);
     themeChart();
   };
-  $('btnSteps').onclick = (e) => { $('steps').hidden = !e.target.classList.toggle('on'); };
-  $('btnExplain').onclick = (e) => { explainOn = e.target.classList.toggle('on'); $('info').hidden = !explainOn; };
 }
 
 // Perbarui teks tombol, pembacaan, dan status langkah kerja
@@ -118,6 +174,10 @@ export function refresh(state, concText) {
   set('btnGas', 'Gas: ', state.gas);
   set('btnFlame', 'Api: ', state.flame);
   $('btnOpt').classList.toggle('on', state.optimized);
+  $('btnPC').textContent = (state.pc ? 'Matikan' : 'Nyalakan') + ' komputer';
+  $('btnMon').textContent = (state.monitor ? 'Matikan' : 'Nyalakan') + ' monitor';
+  $('btnPC').classList.toggle('on', state.pc);
+  $('btnMon').classList.toggle('on', state.monitor);
   $('outConc').textContent = concText;
   $('outA').textContent = state.A.toFixed(4);
   let now = true;

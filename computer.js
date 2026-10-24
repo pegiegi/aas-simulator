@@ -4,8 +4,8 @@ import { mat, addLabel } from './scene.js';
 
 export function createComputer() {
   const group = new THREE.Group();
-  group.position.set(6.3, 0, 1.2);
-  group.rotation.y = -0.4;
+  group.position.set(5.4, 0, 0.5);
+  group.rotation.y = -0.3;
   group.userData.key = 'computer';
   const cv = document.createElement('canvas');
   cv.width = 512; cv.height = 320;
@@ -29,6 +29,7 @@ export function createComputer() {
     update(t, info) {
       if (t - last < 0.12) return;
       last = t;
+      if (!info.screen) { g.fillStyle = '#04070a'; g.fillRect(0, 0, 512, 320); g.fillStyle = '#2a3340'; g.font = '22px monospace'; g.fillText('Layar mati', 190, 165); tex.needsUpdate = true; return; }
       g.fillStyle = '#0b1d2a'; g.fillRect(0, 0, 512, 320);
       g.fillStyle = '#7fe3c0'; g.font = 'bold 24px monospace';
       g.fillText('AAS Cu  λ = 324,7 nm', 16, 36);

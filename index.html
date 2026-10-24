@@ -5,43 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simulasi 3D AAS Nyala – Analisis Tembaga (Cu)</title>
 <style>
-:root{--bg:#0e1621;--panel:#152131;--text:#e7edf4;--muted:#8fa1b5;--accent:#d98a45;--ok:#5bd68a;--border:#27384d;--field:#0e1621}
-[data-theme=light]{--bg:#e9eef3;--panel:#fff;--text:#18222e;--muted:#5d6e80;--accent:#a8581a;--ok:#1f9d57;--border:#cfd9e3;--field:#f3f6f9}
+:root{--bg:#141a33;--side:#1b2250;--panel:#181f45;--btn:#262f6b;--bd:#3a44a0;--text:#eaedff;--muted:#a3abe0;--accent:#19b79a;--warn:#f0a35a;--field:#10153a}
+[data-theme=light]{--bg:#e9ecf8;--side:#fff;--panel:#f6f7fc;--btn:#dfe3f7;--bd:#b8c0ea;--text:#1a1f45;--muted:#555d93;--accent:#0e8f78;--warn:#a85a14;--field:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-#app{display:grid;grid-template-columns:1fr 390px;height:100vh}
-#viewport{position:relative;overflow:hidden;min-height:300px}
-#viewport canvas{display:block}
-#panel{background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;padding:14px 16px 24px}
-h1{font-size:17px;margin:0 0 2px}
-h2{font-size:13px;margin:18px 0 8px;color:var(--accent)}
-p.sub{margin:0;color:var(--muted);font-size:12px}
-.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-button,select{font:inherit;color:var(--text);background:var(--field);border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:grid;grid-template-rows:auto 1fr auto}
+button,select{font:inherit;color:var(--text);background:var(--btn);border:1px solid var(--bd);border-radius:8px;padding:6px 11px;cursor:pointer}
 button:hover{border-color:var(--accent)}
-button.on{background:var(--accent);border-color:var(--accent);color:#111}
-button.primary{background:var(--ok);border-color:var(--ok);color:#06210f;font-weight:600}
+button.on{background:var(--accent);border-color:var(--accent);color:#04201a}
+button.primary{background:#1f9d57;border-color:#1f9d57;color:#fff;font-weight:600}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#top{display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--side);border-bottom:1px solid var(--bd)}
+#top .sub{color:var(--muted);font-size:12px}
+#top .sp{flex:1}
+#main{display:grid;grid-template-columns:230px 1fr 340px;min-height:0}
+#side{background:var(--side);border-right:1px solid var(--bd);overflow-y:auto;padding:10px}
+#side h3,#right h3{margin:10px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
+#side button{display:block;width:100%;text-align:left;margin-bottom:6px}
+#viewport{position:relative;overflow:hidden;min-height:260px}
+#viewport canvas{display:block}
+#right{background:var(--panel);border-left:1px solid var(--bd);overflow-y:auto;padding:12px 14px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1}
+#right h2{font-size:17px;margin:0 0 6px;color:var(--accent)}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
 select{width:100%}
 input[type=range]{width:100%;accent-color:var(--accent)}
-.read{display:flex;justify-content:space-between;align-items:baseline;background:var(--field);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
-#outA{font:700 30px ui-monospace,Consolas,monospace;color:var(--accent)}
+.read{display:flex;justify-content:space-between;align-items:baseline;background:var(--field);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;margin-top:10px}
+#outA{font:700 30px ui-monospace,Consolas,monospace;color:var(--warn)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{padding:3px 6px;border-bottom:1px solid var(--border);text-align:left}
+td,th{padding:3px 6px;border-bottom:1px solid var(--bd);text-align:left}
 #eq{font-family:ui-monospace,Consolas,monospace;margin:8px 0 2px}
-#result{color:var(--ok);font-weight:600;min-height:20px}
-#chartBox{position:relative;height:230px}
+#result{color:var(--accent);font-weight:600;min-height:20px}
+#chartBox{position:relative;height:240px}
 ol{margin:0;padding-left:20px}
 ol li{color:var(--muted);padding:2px 0}
-ol li.done{color:var(--ok);text-decoration:line-through}
+ol li.done{color:var(--accent);text-decoration:line-through}
 ol li.now{color:var(--text);font-weight:600}
-#info{background:var(--field);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
-#info b{display:block;margin-bottom:2px}
-.label{background:rgba(10,16,24,.78);color:#fff;font:12px system-ui,sans-serif;padding:2px 7px;border-radius:4px;white-space:nowrap;cursor:pointer;pointer-events:auto}
-#toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,20px);background:#111c;color:#fff;padding:8px 14px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+#bottom{background:var(--side);border-top:1px solid var(--bd);padding:8px 12px}
+#chips,#acts{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+#chips button{border-radius:999px;font-size:12px;white-space:nowrap}
+#acts{margin-top:6px}
+#acts button{white-space:nowrap}
+.label{background:rgba(10,14,40,.82);color:#fff;font:12px system-ui,sans-serif;padding:2px 7px;border-radius:4px;white-space:nowrap;cursor:pointer;pointer-events:auto}
+#toast{position:fixed;left:50%;bottom:110px;transform:translate(-50%,20px);background:#111c;color:#fff;padding:8px 14px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
-@media(max-width:800px){body{overflow:auto}#app{grid-template-columns:1fr;grid-template-rows:55vh auto;height:auto}#panel{border-left:0;border-top:1px solid var(--border);overflow:visible}}
+#btnMenu{display:none}
+@media(max-width:900px){
+  body{display:block;height:auto;overflow:auto}
+  #btnMenu{display:inline-block}
+  #top .sub{display:none}
+  #main{display:block}
+  #viewport{height:52vh}
+  #side{position:fixed;left:0;top:48px;bottom:0;width:240px;z-index:20;transform:translateX(-100%);transition:.2s}
+  body.menu #side{transform:none}
+  #right{border-left:0;border-top:1px solid var(--bd)}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script type="importmap">
@@ -49,56 +69,70 @@ ol li.now{color:var(--text);font-weight:600}
 </script>
 </head>
 <body>
-<div id="app">
+<header id="top">
+  <button id="btnMenu" aria-label="Menu">☰</button>
+  <b>AAS nyala · Cu 324,7 nm</b>
+  <span class="sub">Simulasi 3D atomic absorption spectrophotometer, media belajar (model edukasi)</span>
+  <span class="sp"></span>
+  <button id="btnTheme" aria-label="Ganti tema gelap/terang">◐</button>
+</header>
+<div id="main">
+  <nav id="side" aria-label="Jelajah instrumen">
+    <h3>Jelajah instrumen</h3><div id="secs"></div>
+    <h3>Komponen</h3><div id="comps"></div>
+  </nav>
   <div id="viewport" aria-label="Tampilan 3D alat AAS"></div>
-  <aside id="panel">
-    <h1>Simulasi AAS Nyala – Cu 324,7 nm</h1>
-    <p class="sub">Seret untuk memutar, scroll/cubit untuk zoom, klik komponen untuk penjelasan.</p>
-
-    <h2>Alat</h2>
-    <div class="row">
-      <button id="btnLamp">Lampu HCL: OFF</button>
-      <button id="btnGas">Gas: OFF</button>
-      <button id="btnFlame">Api: OFF</button>
-      <button id="btnOpt">Optimasi</button>
+  <aside id="right">
+    <div class="tabs">
+      <button data-tab="info" class="on">Info</button><button data-tab="ctl">Kontrol</button><button data-tab="cal">Kalibrasi</button>
     </div>
-
-    <h2>Sampel</h2>
-    <select id="selSample" aria-label="Pilih sampel">
-      <option value="blank">Blanko</option>
-      <option value="s1">Standar 1 (1 ppm)</option><option value="s2">Standar 2 (2 ppm)</option>
-      <option value="s3">Standar 3 (3 ppm)</option><option value="s4">Standar 4 (4 ppm)</option>
-      <option value="s5">Standar 5 (5 ppm)</option>
-      <option value="unknown">Sampel tak dikenal</option>
-      <option value="manual">Manual (slider)</option>
-    </select>
-    <div class="row" style="align-items:center"><label for="rngConc" style="flex:1">Konsentrasi Cu: <b id="outConc">0.00</b> ppm</label></div>
-    <input id="rngConc" type="range" min="0" max="10" step="0.05" value="0">
-    <div class="read" style="margin-top:10px"><span>Absorbansi</span><span id="outA">0.0000</span></div>
-    <div class="row"><button id="btnMeasure" class="primary">Ukur &amp; catat</button><button id="btnClear">Hapus data</button></div>
-
-    <h2>Kurva kalibrasi</h2>
-    <div id="chartBox"><canvas id="chart"></canvas></div>
-    <div id="eq">y = ax + b</div>
-    <div id="result"></div>
-    <table><thead><tr><th>Data</th><th>A (terkoreksi blanko)</th></tr></thead><tbody id="calBody"></tbody></table>
-
-    <h2>Panduan</h2>
-    <div class="row">
-      <button id="btnSteps" class="on">Langkah kerja</button>
-      <button id="btnExplain" class="on">Penjelasan</button>
-    </div>
-    <ol id="steps"></ol>
-    <div id="info"><b id="infoTitle">Penjelasan komponen</b><span id="infoText">Klik komponen 3D atau labelnya.</span></div>
-
-    <h2>Tampilan</h2>
-    <div class="row">
-      <button id="btnReset">Reset kamera</button>
-      <button id="btnLabels" class="on">Label</button>
-      <button id="btnTheme">Tema gelap/terang</button>
-    </div>
+    <section id="paneInfo">
+      <h2 id="infoTitle">Panel informasi</h2>
+      <p id="infoText">Klik komponen pada model 3D atau pada daftar di kiri untuk melihat fungsi dan prinsip kerjanya. Putar dengan seret, zoom dengan scroll atau cubit, geser dengan klik kanan. Tekan Mulai simulasi untuk mencoba pengukuran.</p>
+    </section>
+    <section id="paneCtl" hidden>
+      <h3>Alat</h3>
+      <div class="row"><button id="btnLamp">Lampu HCL: OFF</button><button id="btnGas">Gas: OFF</button><button id="btnFlame">Api: OFF</button><button id="btnOpt">Optimasi</button></div>
+      <h3>Sampel</h3>
+      <select id="selSample" aria-label="Pilih sampel">
+        <option value="blank">Blanko</option>
+        <option value="s1">Standar 1 (1 ppm)</option><option value="s2">Standar 2 (2 ppm)</option>
+        <option value="s3">Standar 3 (3 ppm)</option><option value="s4">Standar 4 (4 ppm)</option>
+        <option value="s5">Standar 5 (5 ppm)</option>
+        <option value="unknown">Sampel tak dikenal</option>
+        <option value="manual">Manual (slider)</option>
+      </select>
+      <label for="rngConc" style="display:block;margin-top:8px">Konsentrasi Cu: <b id="outConc">0.00 ppm</b></label>
+      <input id="rngConc" type="range" min="0" max="10" step="0.05" value="0">
+      <div class="read"><span>Absorbansi</span><span id="outA">0.0000</span></div>
+      <div class="row"><button id="btnMeasure" class="primary">Ukur &amp; catat</button><button id="btnClear">Hapus data</button></div>
+      <h3>Langkah kerja</h3>
+      <ol id="steps"></ol>
+    </section>
+    <section id="paneCal" hidden>
+      <h3>Kurva kalibrasi</h3>
+      <div id="chartBox"><canvas id="chart"></canvas></div>
+      <div id="eq">y = ax + b</div>
+      <div id="result"></div>
+      <table><thead><tr><th>Data</th><th>A (terkoreksi blanko)</th></tr></thead><tbody id="calBody"></tbody></table>
+    </section>
   </aside>
 </div>
+<footer id="bottom">
+  <div id="chips" aria-label="Alur proses"></div>
+  <div id="acts">
+    <button id="btnStart" class="primary">Mulai simulasi</button>
+    <button id="btnComp">Lihat komponen</button>
+    <button id="btnPath">Jalur sampel</button>
+    <button id="btnPrin">Prinsip kerja</button>
+    <button id="btnXray">Tembus pandang</button>
+    <button id="btnCalc">Perhitungan</button>
+    <button id="btnPC">Nyalakan komputer</button>
+    <button id="btnMon">Nyalakan monitor</button>
+    <button id="btnCam">Reset kamera</button>
+    <button id="btnFull">Layar penuh</button>
+  </div>
+</footer>
 <div id="toast" role="status"></div>
 <script type="module" src="./main.js"></script>
 </body>

@@ -52,7 +52,7 @@ export function updateChart(reg, unknownPt) {
 // Sesuaikan warna grafik dengan tema aktif
 export function themeChart() {
   const s = getComputedStyle(document.documentElement);
-  const c = s.getPropertyValue('--text').trim(), g = s.getPropertyValue('--border').trim();
+  const c = s.getPropertyValue('--text').trim(), g = s.getPropertyValue('--bd').trim();
   ['x', 'y'].forEach((k) => {
     const sc = chart.options.scales[k];
     sc.ticks = { color: c }; sc.title.color = c; sc.grid = { color: g };
